@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why the best plan sits at a corner: the workshop LP</title>
+<style>
+  :root {
+    --ink: #1d2433; --muted: #5b6475; --bg: #fafbfc; --card: #ffffff;
+    --line: #d9dee7; --region: #cfe8d6; --region-edge: #3f8f5a;
+    --profit: #c0392b; --best: #f2c94c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 780px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.45rem; margin: 0.2em 0 0.3em; line-height: 1.25; }
+  h2 { font-size: 1.1rem; margin: 1.4em 0 0.4em; }
+  p { margin: 0.4em 0; }
+  .muted { color: var(--muted); }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px; margin: 12px 0;
+  }
+  .problem { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.92rem; }
+  .problem div { white-space: nowrap; overflow-x: auto; }
+  .chip { display: inline-block; width: 14px; height: 4px; border-radius: 2px;
+          vertical-align: middle; margin-right: 6px; }
+  #plotWrap { position: relative; }
+  svg { display: block; width: 100%; height: auto; user-select: none; -webkit-user-select: none; }
+  .axis text { font-size: 13px; fill: var(--muted); }
+  .grid line { stroke: #eef1f5; }
+  .lineLabel { font-size: 14px; font-weight: 600; paint-order: stroke;
+               stroke: #fff; stroke-width: 4px; }
+  #tip {
+    position: absolute; pointer-events: none; background: rgba(29,36,51,0.94);
+    color: #fff; font-size: 0.85rem; line-height: 1.35; padding: 7px 9px;
+    border-radius: 7px; max-width: 230px; display: none; z-index: 2;
+  }
+  #tip b.ok { color: #8fe3a6; } #tip b.bad { color: #ffaaa0; }
+  .sliderRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sliderRow label { font-weight: 600; }
+  input[type=range] { flex: 1 1 220px; min-width: 180px; height: 32px; accent-color: var(--profit); }
+  #kOut { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--profit); min-width: 6.5em; }
+  #status { margin-top: 8px; padding: 8px 10px; border-radius: 8px; font-size: 0.95rem; }
+  #status.inside { background: #e9f6ee; }
+  #status.touch  { background: #fff6d6; }
+  #status.out    { background: #fdecea; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+  th:first-child, td:first-child, th:last-child, td:last-child { text-align: left; }
+  th { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+  tr.best td { background: #fff3c4; font-weight: 700; }
+  .tableWrap { overflow-x: auto; }
+  ol.try li { margin: 0.35em 0; }
+  @media (max-width: 480px) {
+    body { font-size: 15px; }
+    main { padding: 10px; }
+    .card { padding: 9px; }
+    th, td { padding: 6px 4px; font-size: 0.88rem; }
+    .axis text { font-size: 16px; }
+    .lineLabel { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Why the best plan sits at a corner</h1>
+  <p class="muted">The workshop problem from Lecture 2 (Rao, Example 3.2). A firm makes two machine parts.
+    <b>x1</b> = Part I made per week, <b>x2</b> = Part II made per week (the slides call them x and y).</p>
+
+  <div class="card problem" id="problem"></div>
+
+  <div class="card">
+    <div id="plotWrap">
+      <svg id="plot" viewBox="0 0 520 520" aria-label="Feasible region of the workshop problem"></svg>
+      <div id="tip"></div>
+    </div>
+    <div class="sliderRow">
+      <label for="k">Profit target k</label>
+      <input type="range" id="k">
+      <span id="kOut"></span>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <h2>Why a corner?</h2>
+  <p>Every plan on the red line earns the same profit k. Raising k slides the line, still straight and at the
+    same slope, further out. The plans that are still possible get fewer as k grows. Because the edges of the shaded
+    region are straight too, the last bit of the region the line touches is a corner. If the line happened to be
+    parallel to an edge, it would be a whole edge, and that edge still ends in corners. So to find the best plan
+    you only need to check the corners.</p>
+
+  <h2>The corners of the region</h2>
+  <div class="card tableWrap"><table id="corners"></table></div>
+
+  <h2>Try this</h2>
+  <ol class="try">
+    <li>Drag the slider slowly to the right. Watch the bold part of the red line shrink until it is a single
+      point. That point is a corner.</li>
+    <li>Move your finger or mouse along the edge of the shaded area. The profit goes up as you approach the
+      starred corner and goes down after you pass it.</li>
+    <li>Point just outside the shaded area. The box tells you which machine has run out of time. Then find
+      the grinding line: does it ever touch the shaded area?</li>
+  </ol>
+</main>
+
+<script>
+// ---------------------------------------------------------------------------
+// The data, exactly as in the Lecture 2 slides and l02_demo_ex32.m.
+// Everything else on this page is computed from these numbers.
+// ---------------------------------------------------------------------------
+const PROFIT = [50, 100];                  // $ per unit of Part I, Part II
+const MACHINES = [
+  { name: "Lathes",   a: [10, 5],   b: 2500, color: "#2f6fdb" },
+  { name: "Milling",  a: [4, 10],   b: 2000, color: "#e07b00" },
+  { name: "Grinding", a: [1, 1.5],  b: 450,  color: "#8e44ad" },
+];
+const TOL = 1e-9;
+
+// --- small helpers ---------------------------------------------------------
+const fmt = v => {
+  const r = Math.round(v * 100) / 100;
+  return (Math.abs(r) < 1e-9 ? 0 : r).toLocaleString("en-US", { maximumFractionDigits: 2 });
+};
+const money = v => "$" + fmt(v);
+const dot = (a, x) => a[0] * x[0] + a[1] * x[1];
+const profit = x => dot(PROFIT, x);
+const term = (c, v) => (c === 1 ? "" : c) + v;
+
+// All boundaries of the region, as  a . x <= b  (the two sign bounds included).
+const BOUNDS = [
+  ...MACHINES.map(m => ({ a: m.a, b: m.b, label: m.name.toLowerCase() })),
+  { a: [-1, 0], b: 0, label: "x1 = 0" },
+  { a: [0, -1], b: 0, label: "x2 = 0" },
+];
+
+function feasible(x) {
+  return BOUNDS.every(c => dot(c.a, x) <= c.b + TOL * Math.max(1, Math.abs(c.b)));
+}
+
+// --- the corners: intersect every pair of boundary lines, keep the feasible ones
+function computeCorners() {
+  const pts = [];
+  for (let i = 0; i < BOUNDS.length; i++) {
+    for (let j = i + 1; j < BOUNDS.length; j++) {
+      const [p, q] = BOUNDS[i].a, [r, s] = BOUNDS[j].a;
+      const det = p * s - q * r;
+      if (Math.abs(det) < 1e-12) continue;            // parallel lines never meet
+      const x = [(BOUNDS[i].b * s - q * BOUNDS[j].b) / det,
+                 (p * BOUNDS[j].b - BOUNDS[i].b * r) / det];
+      if (!feasible(x)) continue;
+      const old = pts.find(c => Math.hypot(c.x[0] - x[0], c.x[1] - x[1]) < 1e-7);
+      if (old) {                                      // same point, more lines meet there
+        for (const k of [i, j]) if (!old.on.includes(k)) old.on.push(k);
+      } else {
+        pts.push({ x, on: [i, j] });
+      }
+    }
+  }
+  // put them in order around the region so they can be drawn as a polygon
+  const cx = pts.reduce((s, c) => s + c.x[0], 0) / pts.length;
+  const cy = pts.reduce((s, c) => s + c.x[1], 0) / pts.length;
+  pts.sort((u, v) => Math.atan2(u.x[1] - cy, u.x[0] - cx) - Math.atan2(v.x[1] - cy, v.x[0] - cx));
+  pts.forEach(c => { c.p = profit(c.x); });
+  return pts;
+}
+
+const corners = computeCorners();
+const bestP = Math.max(...corners.map(c => c.p));
+const isBest = c => Math.abs(c.p - bestP) <= 1e-9 * Math.max(1, bestP);
+const best = corners.filter(isBest);
+
+// --- plot geometry (axes sized from the constraint intercepts) -------------
+const niceCeil = v => { const m = Math.pow(10, Math.floor(Math.log10(v))); return Math.ceil(v / m * 2) / 2 * m; };
+const XMAX = niceCeil(Math.max(...MACHINES.map(m => m.b / m.a[0])));
+const YMAX = niceCeil(Math.max(...MACHINES.map(m => m.b / m.a[1])));
+const W = 520, H = 520, ML = 58, MR = 14, MT = 14, MB = 50;
+const sx = x => ML + x / XMAX * (W - ML - MR);
+const sy = y => H - MB - y / YMAX * (H - MT - MB);
+const ix = px => (px - ML) / (W - ML - MR) * XMAX;
+const iy = py => (H - MB - py) / (H - MT - MB) * YMAX;
+
+// clip the line a . x = b to the plot box; returns two points or null
+function clipToBox(a, b) {
+  const pts = [];
+  const add = (x, y) => {
+    if (x >= -1e-9 && x <= XMAX + 1e-9 && y >= -1e-9 && y <= YMAX + 1e-9 &&
+        !pts.some(p => Math.abs(p[0] - x) < 1e-7 && Math.abs(p[1] - y) < 1e-7)) pts.push([x, y]);
+  };
+  if (a[1] !== 0) { add(0, b / a[1]); add(XMAX, (b - a[0] * XMAX) / a[1]); }
+  if (a[0] !== 0) { add(b / a[0], 0); add((b - a[1] * YMAX) / a[0], YMAX); }
+  return pts.length >= 2 ? [pts[0], pts[1]] : null;
+}
+
+// the part of the profit line  PROFIT . x = k  that lies inside the region
+function segmentInRegion(k) {
+  const pts = [];
+  for (let i = 0; i < corners.length; i++) {
+    const P = corners[i].x, Q = corners[(i + 1) % corners.length].x;
+    const gp = profit(P) - k, gq = profit(Q) - k;
+    if (Math.abs(gp) < 1e-9) pts.push(P);
+    if (gp * gq < 0) { const t = gp / (gp - gq); pts.push([P[0] + t * (Q[0] - P[0]), P[1] + t * (Q[1] - P[1])]); }
+  }
+  if (!pts.length) return null;
+  pts.sort((u, v) => u[0] - v[0] || v[1] - u[1]);
+  return [pts[0], pts[pts.length - 1]];
+}
+
+// --- build the SVG ---------------------------------------------------------
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("plot");
+function el(tag, attrs, parent = svg, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  parent.appendChild(e);
+  return e;
+}
+
+const clip = el("clipPath", { id: "box" }, el("defs", {}));
+el("rect", { x: ML, y: MT, width: W - ML - MR, height: H - MT - MB }, clip);
+
+// grid and axes
+const grid = el("g", { class: "grid" }), axis = el("g", { class: "axis" });
+const step = XMAX / 5, stepY = YMAX / 5;
+for (let v = 0; v <= XMAX + 1e-9; v += step) {
+  el("line", { x1: sx(v), y1: sy(0), x2: sx(v), y2: sy(YMAX) }, grid);
+  el("text", { x: sx(v), y: sy(0) + 18, "text-anchor": "middle" }, axis, fmt(v));
+}
+for (let v = 0; v <= YMAX + 1e-9; v += stepY) {
+  el("line", { x1: sx(0), y1: sy(v), x2: sx(XMAX), y2: sy(v) }, grid);
+  el("text", { x: sx(0) - 7, y: sy(v) + 4, "text-anchor": "end" }, axis, fmt(v));
+}
+el("line", { x1: sx(0), y1: sy(0), x2: sx(XMAX), y2: sy(0), stroke: "#8a93a3" }, axis);
+el("line", { x1: sx(0), y1: sy(0), x2: sx(0), y2: sy(YMAX), stroke: "#8a93a3" }, axis);
+el("text", { x: (sx(0) + sx(XMAX)) / 2, y: H - 10, "text-anchor": "middle" }, axis, "x1  (Part I per week)");
+el("text", { x: 14, y: (sy(0) + sy(YMAX)) / 2, "text-anchor": "middle",
+             transform: `rotate(-90 14 ${(sy(0) + sy(YMAX)) / 2})` }, axis, "x2  (Part II per week)");
+
+// feasible region
+el("polygon", { points: corners.map(c => `${sx(c.x[0])},${sy(c.x[1])}`).join(" "),
+                fill: "var(--region)", stroke: "var(--region-edge)", "stroke-width": 1.5 });
+
+// the three machine lines, labelled where they are well apart (left side)
+const plotArea = el("g", { "clip-path": "url(#box)" });
+MACHINES.forEach(m => {
+  const seg = clipToBox(m.a, m.b);
+  if (!seg) return;
+  el("line", { x1: sx(seg[0][0]), y1: sy(seg[0][1]), x2: sx(seg[1][0]), y2: sy(seg[1][1]),
+               stroke: m.color, "stroke-width": 2.5 }, plotArea);
+  let lx = 0.13 * XMAX, ly = (m.b - m.a[0] * lx) / m.a[1];
+  if (ly > YMAX * 0.95) { ly = YMAX * 0.9; lx = (m.b - m.a[1] * ly) / m.a[0]; }
+  el("text", { x: sx(lx) + 6, y: sy(ly) - 7, fill: m.color, class: "lineLabel" }, svg, m.name);
+});
+
+// profit line (moved by the slider), its part inside the region, and corners
+const profitLine = el("line", { stroke: "var(--profit)", "stroke-width": 2, "stroke-dasharray": "7 5" }, plotArea);
+const profitIn = el("line", { stroke: "var(--profit)", "stroke-width": 6, "stroke-linecap": "round" }, plotArea);
+const profitLabel = el("text", { fill: "var(--profit)", class: "lineLabel" });
+
+corners.forEach(c => {
+  el("circle", { cx: sx(c.x[0]), cy: sy(c.x[1]), r: 5, fill: "#fff", stroke: "var(--region-edge)", "stroke-width": 2 });
+});
+const starPath = (cx, cy, R, r) => {
+  let d = "";
+  for (let i = 0; i < 10; i++) {
+    const ang = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r : R;
+    d += (i ? "L" : "M") + (cx + rad * Math.cos(ang)).toFixed(1) + "," + (cy + rad * Math.sin(ang)).toFixed(1);
+  }
+  return d + "Z";
+};
+const lastMarks = best.map(c => {
+  const g = el("g", {});
+  el("path", { d: starPath(sx(c.x[0]), sy(c.x[1]), 13, 5.5), fill: "var(--best)", stroke: "#7a5b00", "stroke-width": 1.3 }, g);
+  const t = el("text", { x: sx(c.x[0]) + 14, y: sy(c.x[1]) - 12, class: "lineLabel", fill: "#7a5b00" }, g, "last corner touched");
+  return { g, t };
+});
+
+// hover marker
+const hoverDot = el("circle", { r: 5, fill: "none", stroke: "var(--ink)", "stroke-width": 2, visibility: "hidden" });
+
+// --- problem statement, written from the data ------------------------------
+document.getElementById("problem").innerHTML =
+  `<div><b>maximise</b> profit = ${term(PROFIT[0], "x1")} + ${term(PROFIT[1], "x2")}  [$ per week]</div>` +
+  `<div><b>subject to</b></div>` +
+  MACHINES.map(m => `<div>&nbsp;&nbsp;<span class="chip" style="background:${m.color}"></span>` +
+    `${term(m.a[0], "x1")} + ${term(m.a[1], "x2")} &le; ${fmt(m.b)}  [${m.name.toLowerCase()} minutes]</div>`).join("") +
+  `<div>&nbsp;&nbsp;x1, x2 &ge; 0</div>`;
+
+// --- corner table ------------------------------------------------------------
+const tableCorners = [...corners].sort((u, v) => u.p - v.p);
+document.getElementById("corners").innerHTML =
+  "<tr><th>Corner (x1, x2)</th><th>Profit</th><th>Lines that meet there</th></tr>" +
+  tableCorners.map(c => `<tr class="${isBest(c) ? "best" : ""}">` +
+    `<td>${isBest(c) ? "&#9733; " : ""}(${fmt(c.x[0])}, ${fmt(c.x[1])})</td>` +
+    `<td>${money(c.p)}</td>` +
+    `<td>${c.on.map(i => BOUNDS[i].label).join(", ")}${isBest(c) ? " &mdash; best" : ""}</td></tr>`).join("");
+
+// --- slider ------------------------------------------------------------------
+const slider = document.getElementById("k");
+const KSTEP = bestP / 175;                       // so the best profit is exactly reachable
+slider.min = 0; slider.step = KSTEP; slider.max = KSTEP * Math.ceil(1.4 * bestP / KSTEP);
+slider.value = KSTEP * Math.round(0.45 * bestP / KSTEP);
+
+function update() {
+  const k = Number(slider.value);
+  document.getElementById("kOut").textContent = money(k);
+  const seg = clipToBox(PROFIT, k);
+  if (seg) {
+    profitLine.setAttribute("visibility", "visible");
+    profitLine.setAttribute("x1", sx(seg[0][0])); profitLine.setAttribute("y1", sy(seg[0][1]));
+    profitLine.setAttribute("x2", sx(seg[1][0])); profitLine.setAttribute("y2", sy(seg[1][1]));
+    const top = seg[0][1] >= seg[1][1] ? seg[0] : seg[1];
+    profitLabel.setAttribute("x", Math.min(sx(top[0]) + 6, W - 120));
+    profitLabel.setAttribute("y", Math.max(sy(top[1]) + 16, MT + 14));
+    profitLabel.textContent = "profit = " + money(k);
+  } else {
+    profitLine.setAttribute("visibility", "hidden");
+    profitLabel.textContent = "";
+  }
+
+  const inside = segmentInRegion(k);
+  const status = document.getElementById("status");
+  const touchesOnlyCorner = inside && Math.hypot(inside[0][0] - inside[1][0], inside[0][1] - inside[1][1]) < 1e-6;
+  const bestTxt = best.map(c => `(${fmt(c.x[0])}, ${fmt(c.x[1])})`).join(" and ");
+
+  if (inside) {
+    profitIn.setAttribute("visibility", "visible");
+    profitIn.setAttribute("x1", sx(inside[0][0])); profitIn.setAttribute("y1", sy(inside[0][1]));
+    profitIn.setAttribute("x2", sx(inside[1][0])); profitIn.setAttribute("y2", sy(inside[1][1]));
+  } else {
+    profitIn.setAttribute("visibility", "hidden");
+  }
+
+  if (inside && !touchesOnlyCorner) {
+    status.className = "inside";
+    status.innerHTML = `<b>The line still crosses the region.</b> Every plan on the bold part earns ${money(k)}. ` +
+      `You can ask for more. Push k up.`;
+  } else if (inside) {
+    status.className = "touch";
+    const at = inside[0];
+    status.innerHTML = Math.abs(k - bestP) < 1e-6 * Math.max(1, bestP)
+      ? `<b>The line touches the region at one point only: the corner (${fmt(at[0])}, ${fmt(at[1])}).</b> ` +
+        `This is the best possible plan, ${money(k)} a week. Any higher k and the line leaves the region.`
+      : `<b>The line touches the region only at the corner (${fmt(at[0])}, ${fmt(at[1])}).</b>`;
+  } else {
+    status.className = "out";
+    status.innerHTML = k > bestP
+      ? `<b>The line no longer touches the region.</b> No possible plan earns ${money(k)}. ` +
+        `The last point it touched was the corner ${bestTxt}, at ${money(bestP)}.`
+      : `<b>The line does not touch the region.</b>`;
+  }
+  const reached = k >= bestP - 1e-6 * Math.max(1, bestP);
+  lastMarks.forEach(m => m.t.setAttribute("visibility", reached ? "visible" : "hidden"));
+}
+slider.addEventListener("input", update);
+update();
+
+// --- hover / tap readout ---------------------------------------------------------
+const tip = document.getElementById("tip"), wrap = document.getElementById("plotWrap");
+function showPoint(evt) {
+  const pt = svg.createSVGPoint(); pt.x = evt.clientX; pt.y = evt.clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+  if (p.x < ML || p.x > W - MR || p.y < MT || p.y > H - MB) { hide(); return; }
+  let x = [ix(p.x), iy(p.y)];
+  // snap to a corner when close, so the exact corner values can be read
+  const near = corners.find(c => Math.hypot(sx(c.x[0]) - p.x, sy(c.x[1]) - p.y) < 10);
+  if (near) x = near.x.slice();
+  hoverDot.setAttribute("cx", sx(x[0])); hoverDot.setAttribute("cy", sy(x[1]));
+  hoverDot.setAttribute("visibility", "visible");
+
+  const over = MACHINES.filter(m => dot(m.a, x) > m.b * (1 + TOL));
+  const ok = over.length === 0 && x[0] >= -TOL && x[1] >= -TOL;
+  let html = `x1 = ${fmt(x[0])} &nbsp; x2 = ${fmt(x[1])}<br>profit = <b>${money(profit(x))}</b><br>`;
+  html += ok ? `<b class="ok">Feasible</b>: every machine has enough time.`
+             : `<b class="bad">Not feasible</b>: ` + over.map(m =>
+                 `${m.name.toLowerCase()} needs ${fmt(dot(m.a, x))} of ${fmt(m.b)} min`).join("; ") + ".";
+  if (near) html = `<b>Corner</b><br>` + html;
+  tip.innerHTML = html;
+  tip.style.display = "block";
+
+  const r = wrap.getBoundingClientRect();
+  let left = evt.clientX - r.left + 14, topPx = evt.clientY - r.top - tip.offsetHeight - 12;
+  if (left + tip.offsetWidth > r.width) left = evt.clientX - r.left - tip.offsetWidth - 14;
+  if (left < 0) left = 4;
+  if (topPx < 0) topPx = evt.clientY - r.top + 18;
+  tip.style.left = left + "px"; tip.style.top = topPx + "px";
+}
+function hide() { tip.style.display = "none"; hoverDot.setAttribute("visibility", "hidden"); }
+svg.addEventListener("pointermove", showPoint);
+svg.addEventListener("pointerdown", showPoint);
+svg.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") hide(); });
+</script>
+
+<footer style="margin:2em auto 1em;padding:0.8em 1em;max-width:900px;border-top:1px solid #ccc;font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#555;text-align:center">&copy; 2026 Hao Li &lt;hli@sdu.dk&gt;. All rights reserved. &middot; <a href="../../" style="color:#22577a">&larr; All versions</a></footer>
+</body>
+</html>

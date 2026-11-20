@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear Programming: an introduction</title>
+<style>
+  :root {
+    --ink: #1d2330;
+    --muted: #5b6475;
+    --bg: #fbfbfd;
+    --card: #ffffff;
+    --line: #e2e5ec;
+    --accent: #2f5fd0;
+    --ok: #1f8a4c;
+    --bad: #c23a3a;
+    --region: #dbe7fb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+  }
+  header {
+    background: linear-gradient(135deg, #2f5fd0, #5a3fc0);
+    color: #fff;
+    padding: 3rem 1.5rem 2.5rem;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 .4rem; font-size: 2.3rem; }
+  header p  { margin: 0; opacity: .9; font-size: 1.1rem; }
+  nav {
+    position: sticky; top: 0; z-index: 5;
+    background: #fff; border-bottom: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; justify-content: center; gap: .25rem 1.2rem;
+    padding: .6rem 1rem; font-size: .92rem;
+  }
+  nav a { color: var(--muted); text-decoration: none; }
+  nav a:hover { color: var(--accent); }
+  main { max-width: 860px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  section { margin-top: 2.8rem; }
+  h2 { font-size: 1.55rem; border-bottom: 2px solid var(--line); padding-bottom: .3rem; }
+  h3 { font-size: 1.15rem; margin-bottom: .3rem; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 1rem 1.25rem; margin: 1rem 0;
+  }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+  .grid3 .card { margin: 0; }
+  .math {
+    font-family: "Cambria Math", "STIX Two Math", Georgia, serif;
+    background: #f3f5fa; border-left: 4px solid var(--accent);
+    padding: .8rem 1.1rem; border-radius: 6px; margin: 1rem 0;
+    white-space: pre; overflow-x: auto; font-size: 1.05rem; line-height: 1.7;
+  }
+  .note { border-left: 4px solid #e0a100; background: #fff8e6; padding: .7rem 1rem; border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .97rem; }
+  th, td { border-bottom: 1px solid var(--line); padding: .45rem .6rem; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  th { background: #f3f5fa; }
+  tr.best td { background: #e8f6ee; font-weight: 600; }
+  pre.code {
+    background: #1e2433; color: #e6e9f0; padding: 1rem 1.2rem; border-radius: 8px;
+    overflow-x: auto; font-size: .9rem; line-height: 1.5;
+  }
+  pre.code .c { color: #8a94a8; }
+  .plotwrap { display: flex; flex-wrap: wrap; gap: 1.2rem; align-items: flex-start; }
+  svg#plot { background: #fff; border: 1px solid var(--line); border-radius: 10px; max-width: 100%; height: auto; cursor: crosshair; }
+  .panel { flex: 1 1 230px; }
+  .panel label { font-weight: 600; display: block; margin-bottom: .3rem; }
+  input[type=range] { width: 100%; }
+  .status { margin-top: .6rem; padding: .55rem .8rem; border-radius: 6px; font-size: .95rem; }
+  .status.ok  { background: #e8f6ee; color: var(--ok); }
+  .status.bad { background: #fbeaea; color: var(--bad); }
+  .status.opt { background: #fff4d6; color: #8a5a00; }
+  .legend span { display: inline-flex; align-items: center; gap: .35rem; margin-right: .9rem; font-size: .88rem; }
+  .sw { width: 18px; height: 3px; display: inline-block; }
+  ol.steps li { margin-bottom: .45rem; }
+  footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 2rem 1rem; border-top: 1px solid var(--line); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Linear Programming</h1>
+  <p>How to make the best decision when everything is a straight line</p>
+</header>
+
+<nav>
+  <a href="#what">What is it?</a>
+  <a href="#ingredients">Ingredients</a>
+  <a href="#example">Example</a>
+  <a href="#graph">Try it</a>
+  <a href="#corners">Why corners?</a>
+  <a href="#simplex">Simplex</a>
+  <a href="#prices">Shadow prices</a>
+  <a href="#matlab">MATLAB</a>
+  <a href="#limits">Limits</a>
+</nav>
+
+<main>
+
+<section id="what">
+  <h2>1. What is linear programming?</h2>
+  <p>
+    <strong>Linear programming (LP)</strong> is a method for choosing the values of some
+    decision variables so that a quantity you care about (profit, cost, weight, time) is
+    as large or as small as possible, while respecting a set of limits.
+  </p>
+  <p>
+    The word <em>linear</em> means that the objective and every limit are sums of the
+    variables times constants: no squares, no products of variables, no <code>sin</code>.
+    The word <em>programming</em> is old-fashioned: it means "planning", not "writing code".
+  </p>
+  <div class="note">
+    LP is everywhere: production planning, diets, transport and logistics, blending fuels,
+    scheduling staff, airline crews, power grids. Very large LPs (millions of variables)
+    are solved routinely.
+  </div>
+</section>
+
+<section id="ingredients">
+  <h2>2. The three ingredients</h2>
+  <div class="grid3">
+    <div class="card">
+      <h3>Decision variables</h3>
+      <p>What you get to choose. Example: how many units of each product to make,
+         <code>x</code> and <code>y</code>.</p>
+    </div>
+    <div class="card">
+      <h3>Objective function</h3>
+      <p>What you want to maximise or minimise, written as a linear function,
+         e.g. <code>profit = 50x + 100y</code>.</p>
+    </div>
+    <div class="card">
+      <h3>Constraints</h3>
+      <p>The limits, as linear inequalities or equalities, e.g.
+         <code>10x + 5y &le; 2500</code>, and usually <code>x, y &ge; 0</code>.</p>
+    </div>
+  </div>
+  <p>In general form, with <em>n</em> variables and <em>m</em> constraints:</p>
+  <div class="math">minimise    f(<b>x</b>) = c&#8321;x&#8321; + c&#8322;x&#8322; + &hellip; + c&#8345;x&#8345;  =  <b>c</b>&#7488;<b>x</b>
+subject to  <b>A</b><b>x</b> &le; <b>b</b>
+            <b>x</b> &ge; <b>0</b></div>
+  <p>Maximising profit is the same as minimising <em>minus</em> the profit, so one form covers both.</p>
+</section>
+
+<section id="example">
+  <h2>3. A worked example: the machine shop</h2>
+  <p>
+    A firm makes two machine parts, I and II, on three kinds of machine. Each part needs
+    some minutes on each machine, and each machine has a limited number of minutes per week.
+  </p>
+  <table>
+    <tr><th>Machine</th><th>Part I (min/unit)</th><th>Part II (min/unit)</th><th>Available (min/week)</th></tr>
+    <tr><td>Lathes</td><td>10</td><td>5</td><td>2500</td></tr>
+    <tr><td>Milling machines</td><td>4</td><td>10</td><td>2000</td></tr>
+    <tr><td>Grinding machines</td><td>1</td><td>1.5</td><td>450</td></tr>
+    <tr><td><em>Profit per unit</em></td><td><em>$50</em></td><td><em>$100</em></td><td></td></tr>
+  </table>
+  <p>Let <code>x</code> = units of part I per week and <code>y</code> = units of part II per week. Then:</p>
+  <div class="math">maximise    P = 50x + 100y            (weekly profit, $)
+subject to  10x +   5y &le; 2500        (lathe minutes)
+             4x +  10y &le; 2000        (milling minutes)
+              x + 1.5y &le;  450        (grinding minutes)
+              x, y &ge; 0</div>
+  <p>Part II earns twice as much, so why not make only part II? Let's look.</p>
+</section>
+
+<section id="graph">
+  <h2>4. See it: the graphical method</h2>
+  <p>
+    With two variables we can draw the problem. Each constraint is a straight line; the
+    allowed side of all of them together is the shaded <strong>feasible region</strong>.
+    Every point in it is a production plan the factory can actually run.
+  </p>
+  <div class="plotwrap">
+    <svg id="plot" width="540" height="420" viewBox="0 0 540 420" role="img"
+         aria-label="Feasible region of the machine shop LP with an adjustable profit line"></svg>
+    <div class="panel">
+      <label for="k">Profit line: 50x + 100y = <span id="kval">10000</span></label>
+      <input id="k" type="range" min="0" max="30000" step="125" value="10000">
+      <div id="kstatus" class="status ok"></div>
+      <p style="font-size:.93rem;color:var(--muted)">
+        Drag the slider to push the profit line upward. Every point on the line earns the
+        same profit. The best plan is the <em>last</em> point of the region the line
+        touches before it leaves.
+      </p>
+      <p style="font-size:.93rem;color:var(--muted)">
+        <strong>Click anywhere on the plot</strong> to test a plan.
+      </p>
+      <div id="clickinfo" class="status" style="display:none"></div>
+      <div class="legend" style="margin-top:.6rem">
+        <span><i class="sw" style="background:#d1495b"></i>lathes</span>
+        <span><i class="sw" style="background:#00798c"></i>milling</span>
+        <span><i class="sw" style="background:#edae49"></i>grinding</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="corners">
+  <h2>5. Why the answer is always at a corner</h2>
+  <p>
+    Because the objective is linear, its level lines are parallel straight lines, and the
+    profit grows steadily in one direction. The feasible region is a convex polygon (in
+    higher dimensions, a polytope). Sliding a straight line across a polygon, the last
+    contact is always a <strong>corner</strong> (or, in a tie, a whole edge that includes
+    corners).
+  </p>
+  <p>So we only need to check the corners:</p>
+  <table>
+    <tr><th>Corner (x, y)</th><th>Which limits are tight</th><th>Profit 50x + 100y</th></tr>
+    <tr><td>(0, 0)</td><td>x = 0, y = 0</td><td>$0</td></tr>
+    <tr><td>(250, 0)</td><td>lathes, y = 0</td><td>$12,500</td></tr>
+    <tr><td>(0, 200)</td><td>milling, x = 0</td><td>$20,000</td></tr>
+    <tr class="best"><td>(187.5, 125)</td><td>lathes and milling</td><td>$21,875</td></tr>
+  </table>
+  <p>
+    Making only part II, the best you can do is 200 units ($20,000): the milling
+    machines run out. Mixing in some part I uses the lathes, which had spare time,
+    and lifts profit to <strong>$21,875</strong>. Grinding is never a bottleneck: at the
+    optimum 75 grinding minutes sit idle.
+  </p>
+  <div class="note">
+    This is the <strong>fundamental theorem of LP</strong>: if an LP has an optimal solution,
+    at least one optimal solution is at a vertex (a "basic feasible solution") of the
+    feasible region.
+  </div>
+</section>
+
+<section id="simplex">
+  <h2>6. Beyond two variables: the simplex method</h2>
+  <p>
+    Real problems have hundreds or millions of variables, so drawing is out. But the corner
+    idea survives. A polytope can have a huge number of corners, so checking them all is
+    hopeless; the <strong>simplex method</strong> (George Dantzig, 1947) walks from corner to
+    corner instead, always uphill:
+  </p>
+  <ol class="steps">
+    <li><strong>Standard form.</strong> Turn each &le; into an equation by adding a
+        <em>slack variable</em>: <code>10x + 5y + s&#8321; = 2500</code>, with
+        <code>s&#8321; &ge; 0</code> the unused lathe minutes.</li>
+    <li><strong>Start at a corner.</strong> Here, <code>x = y = 0</code> with all slacks
+        equal to the full capacities (make nothing, use nothing).</li>
+    <li><strong>Pick a direction that improves the objective.</strong> If no neighbouring
+        edge improves it, the current corner is optimal: stop.</li>
+    <li><strong>Move along that edge</strong> until a constraint blocks you (the
+        <em>ratio test</em>). That is the next corner. This swap is a <em>pivot</em>.</li>
+    <li><strong>Repeat</strong> from step 3.</li>
+  </ol>
+  <p>
+    For the machine shop, simplex goes (0, 0) &rarr; (0, 200) &rarr; (187.5, 125): two
+    pivots. In practice simplex usually needs a number of pivots of the order of the number of
+    constraints. <em>Interior-point methods</em> are the main alternative: they cut
+    through the inside of the region instead of walking its edges.
+  </p>
+</section>
+
+<section id="prices">
+  <h2>7. A bonus answer: shadow prices</h2>
+  <p>
+    Solving an LP tells you more than the best plan. Each constraint gets a
+    <strong>shadow price</strong> (or <em>dual value</em>): how much the optimal objective
+    would improve if that limit were relaxed by one unit.
+  </p>
+  <table>
+    <tr><th>Resource</th><th>Used at optimum</th><th>Available</th><th>Slack</th><th>Shadow price</th></tr>
+    <tr><td>Lathes</td><td>2500</td><td>2500</td><td>0</td><td>$1.25 / min</td></tr>
+    <tr class="best"><td>Milling</td><td>2000</td><td>2000</td><td>0</td><td>$9.375 / min</td></tr>
+    <tr><td>Grinding</td><td>375</td><td>450</td><td>75</td><td>$0 / min</td></tr>
+  </table>
+  <p>
+    Reading: an extra minute of milling is worth about $9.38 of profit, an extra lathe minute
+    only $1.25, and extra grinding time is worth nothing because some is already idle.
+    If you can buy capacity, buy milling first. A constraint with slack always has a zero
+    shadow price (<em>complementary slackness</em>).
+  </p>
+  <div class="note">
+    Check: 2500 &times; 1.25 + 2000 &times; 9.375 = $21,875, exactly the optimal profit.
+    That is no coincidence: it is <strong>LP duality</strong>.
+  </div>
+</section>
+
+<section id="matlab">
+  <h2>8. Solving it in MATLAB</h2>
+  <p>
+    MATLAB's <code>linprog</code> (Optimization Toolbox) <em>minimises</em> <code>f'*x</code>
+    subject to <code>A*x &le; b</code>, so we minimise minus the profit:
+  </p>
+<pre class="code"><span class="c">% minimise -50x - 100y  (= -profit)</span>
+f  = [-50; -100];
+A  = [10  5;  4 10;  1 1.5];
+b  = [2500; 2000; 450];
+lb = [0; 0];
+
+[x, fval, exitflag, ~, lambda] = linprog(f, A, b, [], [], lb);
+
+x                   <span class="c">% [187.5; 125]</span>
+profit = -fval      <span class="c">% 21875</span>
+lambda.ineqlin      <span class="c">% shadow prices [1.25; 9.375; 0]</span></pre>
+  <p>
+    The repository's <code>course_material/l02_demo_ex32.m</code> does exactly this, checks
+    the answer against the hand-computed simplex tableau, and draws the feasible region.
+  </p>
+</section>
+
+<section id="limits">
+  <h2>9. What can go wrong, and what LP cannot do</h2>
+  <div class="grid3">
+    <div class="card">
+      <h3>Infeasible</h3>
+      <p>The constraints contradict each other, so the feasible region is empty. No plan exists.</p>
+    </div>
+    <div class="card">
+      <h3>Unbounded</h3>
+      <p>The region is open in a direction that keeps improving the objective, so there is no best value. Usually a missing constraint.</p>
+    </div>
+    <div class="card">
+      <h3>Many optima</h3>
+      <p>The profit line is parallel to an edge of the region: every point on that edge is optimal.</p>
+    </div>
+  </div>
+  <p>And some problems are not LPs at all:</p>
+  <ul>
+    <li><strong>Whole numbers.</strong> The optimum says 187.5 parts; you cannot make half a
+        part. Requiring integers gives <em>integer programming</em>, which is much harder.
+        Rounding is not always safe: it may break a constraint or miss the true best.</li>
+    <li><strong>Curves.</strong> If profit per unit falls as you sell more, or a constraint
+        involves <code>x&sup2;</code>, the problem is <em>nonlinear</em> and the corner
+        argument no longer holds.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Summary</h2>
+  <ul>
+    <li>An LP has decision variables, a linear objective and linear constraints.</li>
+    <li>The constraints carve out a convex feasible region; the optimum sits at a corner.</li>
+    <li>Simplex walks from corner to corner, uphill, until no neighbour is better.</li>
+    <li>Shadow prices tell you which limit is worth relaxing, and by how much.</li>
+    <li>Check the answer: is it feasible, does it make physical sense, and are integers needed?</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  Linear programming: an introduction. Example adapted from S.S. Rao, <em>Engineering Optimization</em>, Example 3.2.
+</footer>
+
+<script>
+(function () {
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.getElementById("plot");
+  // Plot area and data ranges
+  const L = 60, R = 520, T = 20, B = 370;
+  const XMAX = 500, YMAX = 320;
+  const sx = x => L + (x / XMAX) * (R - L);
+  const sy = y => B - (y / YMAX) * (B - T);
+  const ix = px => (px - L) / (R - L) * XMAX;
+  const iy = py => (B - py) / (B - T) * YMAX;
+
+  function el(name, attrs, parent) {
+    const e = document.createElementNS(NS, name);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    (parent || svg).appendChild(e);
+    return e;
+  }
+
+  // Clip path for the plot area
+  const defs = el("defs", {});
+  const cp = el("clipPath", { id: "area" }, defs);
+  el("rect", { x: L, y: T, width: R - L, height: B - T }, cp);
+  const g = el("g", { "clip-path": "url(#area)" });
+
+  // Grid and axes
+  for (let x = 0; x <= XMAX; x += 50) {
+    el("line", { x1: sx(x), y1: T, x2: sx(x), y2: B, stroke: "#eef0f4" }, g);
+    if (x % 100 === 0) {
+      const t = el("text", { x: sx(x), y: B + 18, "text-anchor": "middle", "font-size": 12, fill: "#5b6475" });
+      t.textContent = x;
+    }
+  }
+  for (let y = 0; y <= YMAX; y += 40) {
+    el("line", { x1: L, y1: sy(y), x2: R, y2: sy(y), stroke: "#eef0f4" }, g);
+    if (y % 80 === 0) {
+      const t = el("text", { x: L - 8, y: sy(y) + 4, "text-anchor": "end", "font-size": 12, fill: "#5b6475" });
+      t.textContent = y;
+    }
+  }
+  const xl = el("text", { x: (L + R) / 2, y: B + 40, "text-anchor": "middle", "font-size": 13, fill: "#1d2330" });
+  xl.textContent = "x  (part I per week)";
+  const yl = el("text", { x: 16, y: (T + B) / 2, "text-anchor": "middle", "font-size": 13, fill: "#1d2330",
+                          transform: `rotate(-90 16 ${(T + B) / 2})` });
+  yl.textContent = "y  (part II per week)";
+
+  // Feasible region (vertices computed by hand, see table)
+  const verts = [[0, 0], [250, 0], [187.5, 125], [0, 200]];
+  el("polygon", { points: verts.map(v => sx(v[0]) + "," + sy(v[1])).join(" "),
+                  fill: "#dbe7fb", stroke: "#2f5fd0", "stroke-width": 1.5 }, g);
+
+  // Constraint lines a*x + b*y = c
+  const cons = [
+    { a: 10, b: 5,   c: 2500, col: "#d1495b", name: "lathes" },
+    { a: 4,  b: 10,  c: 2000, col: "#00798c", name: "milling" },
+    { a: 1,  b: 1.5, c: 450,  col: "#edae49", name: "grinding" }
+  ];
+  cons.forEach(k => {
+    el("line", { x1: sx(0), y1: sy(k.c / k.b), x2: sx(k.c / k.a), y2: sy(0),
+                 stroke: k.col, "stroke-width": 2.2 }, g);
+  });
+
+  // Axes on top
+  el("line", { x1: L, y1: B, x2: R, y2: B, stroke: "#1d2330" });
+  el("line", { x1: L, y1: T, x2: L, y2: B, stroke: "#1d2330" });
+
+  // Profit line
+  const pline = el("line", { stroke: "#1f8a4c", "stroke-width": 2.5, "stroke-dasharray": "7 5" }, g);
+
+  // Corners
+  verts.forEach(v => {
+    const c = el("circle", { cx: sx(v[0]), cy: sy(v[1]), r: 4.5, fill: "#2f5fd0" });
+    const t = el("title", {}, c);
+    t.textContent = `(${v[0]}, ${v[1]}): profit $${(50 * v[0] + 100 * v[1]).toLocaleString()}`;
+  });
+  const star = el("circle", { cx: sx(187.5), cy: sy(125), r: 8, fill: "#ffd23f", stroke: "#8a5a00",
+                              "stroke-width": 1.5, opacity: 0 });
+  const starLbl = el("text", { x: sx(187.5) + 12, y: sy(125) - 10, "font-size": 13, "font-weight": 700,
+                               fill: "#8a5a00", opacity: 0 });
+  starLbl.textContent = "optimum (187.5, 125)";
+
+  // Click marker
+  const probe = el("circle", { r: 5, fill: "none", stroke: "#1d2330", "stroke-width": 2, opacity: 0 });
+
+  const slider = document.getElementById("k");
+  const kval = document.getElementById("kval");
+  const kstatus = document.getElementById("kstatus");
+  const PMAX = 21875;
+
+  function update() {
+    const k = +slider.value;
+    kval.textContent = k.toLocaleString();
+    // 50x + 100y = k  ->  y = (k - 50x)/100 ; draw across the whole x range
+    pline.setAttribute("x1", sx(0));    pline.setAttribute("y1", sy(k / 100));
+    pline.setAttribute("x2", sx(XMAX)); pline.setAttribute("y2", sy((k - 50 * XMAX) / 100));
+    let cls, msg, col;
+    if (Math.abs(k - PMAX) < 1) {
+      cls = "opt"; col = "#c98a00";
+      msg = "The line just touches the region at one corner: (187.5, 125). This is the maximum profit, $21,875.";
+    } else if (k < PMAX) {
+      cls = "ok"; col = "#1f8a4c";
+      msg = "The line crosses the feasible region: many plans earn this profit. Push it higher.";
+    } else {
+      cls = "bad"; col = "#c23a3a";
+      msg = "The line has left the region: no feasible plan earns this much.";
+    }
+    kstatus.className = "status " + cls;
+    kstatus.textContent = msg;
+    pline.setAttribute("stroke", col);
+    const on = cls === "opt" ? 1 : 0;
+    star.setAttribute("opacity", on);
+    starLbl.setAttribute("opacity", on);
+  }
+  slider.addEventListener("input", update);
+  // Snap near the optimum so it is easy to hit
+  slider.addEventListener("change", () => {
+    if (Math.abs(+slider.value - PMAX) <= 250) { slider.value = PMAX; update(); }
+  });
+  update();
+
+  // Click to test a plan
+  const info = document.getElementById("clickinfo");
+  svg.addEventListener("click", ev => {
+    const pt = svg.createSVGPoint();
+    pt.x = ev.clientX; pt.y = ev.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const x = Math.round(ix(p.x)), y = Math.round(iy(p.y));
+    if (x < 0 || y < 0 || x > XMAX || y > YMAX) return;
+    probe.setAttribute("cx", sx(x)); probe.setAttribute("cy", sy(y)); probe.setAttribute("opacity", 1);
+    const broken = cons.filter(k => k.a * x + k.b * y > k.c + 1e-9).map(k => k.name);
+    const profit = 50 * x + 100 * y;
+    info.style.display = "block";
+    if (broken.length === 0) {
+      info.className = "status ok";
+      info.textContent = `Plan (${x}, ${y}) is feasible. Profit $${profit.toLocaleString()}.`;
+    } else {
+      info.className = "status bad";
+      info.textContent = `Plan (${x}, ${y}) would earn $${profit.toLocaleString()}, but needs more ${broken.join(" and ")} time than exists.`;
+    }
+  });
+})();
+</script>
+
+
+<footer style="margin:2em auto 1em;padding:0.8em 1em;max-width:900px;border-top:1px solid #ccc;font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#555;text-align:center">&copy; 2026 Hao Li &lt;hli@sdu.dk&gt;. All rights reserved. &middot; <a href="../../" style="color:#22577a">&larr; All versions</a></footer>
+</body>
+</html>

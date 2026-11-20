@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One LP, four AI-made web pages — Engineering Optimisation, Lecture 9</title>
+<style>
+  :root { --ink:#1d2433; --soft:#5b6475; --line:#dde2ea; --bg:#f6f7f9;
+          --ok:#1f7a4d; --bad:#b7791f; --accent:#22577a; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         color:var(--ink); background:var(--bg); }
+  main { max-width:1080px; margin:0 auto; padding:24px 18px 48px; }
+  h1 { font-size:1.75rem; line-height:1.25; margin:0.2em 0 0.3em; }
+  h2 { font-size:1.3rem; margin:2em 0 0.2em; }
+  .lead { color:var(--soft); margin:0 0 1em; }
+  .lp { background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px 16px;
+        font:14px/1.5 ui-monospace, Menlo, Consolas, monospace; overflow-x:auto; white-space:pre; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:18px; margin-top:12px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:10px; overflow:hidden;
+          display:flex; flex-direction:column; }
+  .card > a.shot { display:block; border-bottom:1px solid var(--line); }
+  .card img { display:block; width:100%; height:auto; aspect-ratio:4/3; object-fit:cover; object-position:top; }
+  .noshot { aspect-ratio:4/3; display:flex; align-items:center; justify-content:center; padding:20px;
+            background:repeating-linear-gradient(45deg,#f3f4f6,#f3f4f6 10px,#eceef2 10px,#eceef2 20px);
+            color:var(--soft); text-align:center; border-bottom:1px solid var(--line); }
+  .body { padding:12px 14px 14px; display:flex; flex-direction:column; gap:8px; flex:1; }
+  .tag { font-size:0.8rem; color:var(--soft); }
+  .card h3 { margin:0; font-size:1.08rem; }
+  .good, .bad { margin:0; padding-left:1.4em; text-indent:-1.4em; font-size:0.95rem; }
+  .good::before { content:"✓ "; color:var(--ok); font-weight:700; }
+  .bad::before  { content:"△ "; color:var(--bad); font-weight:700; }
+  details { font-size:0.9rem; }
+  summary { cursor:pointer; color:var(--accent); }
+  details pre { white-space:pre-wrap; background:var(--bg); border:1px solid var(--line); border-radius:6px;
+                padding:8px 10px; margin:6px 0 0; font:13px/1.45 ui-monospace, Menlo, Consolas, monospace; }
+  .open { margin-top:auto; align-self:flex-start; background:var(--accent); color:#fff; text-decoration:none;
+          padding:6px 12px; border-radius:6px; font-weight:600; font-size:0.95rem; }
+  .open:hover { background:#18405a; }
+  .pfile { font-size:0.9rem; }
+  table { border-collapse:collapse; background:#fff; border:1px solid var(--line); width:100%; max-width:640px; }
+  th, td { padding:6px 10px; border-bottom:1px solid var(--line); text-align:left; font-size:0.95rem; }
+  td.n { text-align:right; font-variant-numeric:tabular-nums; }
+  ol li { margin:0.25em 0; }
+  footer { margin-top:3em; color:var(--soft); font-size:0.9rem; }
+  a { color:var(--accent); }
+  @media (max-width:420px) { .lp { font-size:13px; padding:10px 12px; } th, td { padding:5px 6px; font-size:0.88rem; } }
+</style>
+</head>
+<body>
+<main>
+
+<p class="tag">Engineering Optimisation · Lecture 9 · Git, GitHub and coding with AI</p>
+<h1>One linear programme, four web pages made by AI</h1>
+<p class="lead">
+The workshop problem of Lecture 2, given to Claude, working as an agent in a folder holding the
+lecture's slides and its MATLAB code. Each card shows the prompt, the page it produced, and what was
+worked, and what could be better, when we checked it against the slides and MATLAB. At the bottom: the warm-up page a free
+model made. <strong>More detail in the prompt, a better page; and
+every page still had to be checked.</strong>
+</p>
+
+<div class="lp">max   50 x1 + 100 x2
+s.t.  10 x1 +   5 x2 &le; 2500  lathes
+       4 x1 +  10 x2 &le; 2000  milling
+         x1 + 1.5 x2 &le;  450  grinding
+       x1, x2 &ge; 0</div>
+<p class="lead" style="margin-top:0.6em">x1, x2: parts I and II made per week; profit in $ per week; machine time in minutes per week.
+The answer: <strong>(x1, x2) = (187.5, 125), profit $21,875</strong>.</p>
+
+<h2>A paid agent: Claude</h2>
+<p class="lead">Claude (Opus 5.5) working as an agent in the folder, as Claude Code does. November 2026.</p>
+<div class="grid">
+
+  <article class="card">
+    <a class="shot" href="claude/v1/"><img src="images/claude_v1.jpg" alt="Screenshot of the v1 page" loading="lazy"></a>
+    <div class="body">
+      <span class="tag">v1 · one line · about 4 minutes</span>
+      <h3>A textbook chapter</h3>
+      <p class="good">It looked in the folder on its own and used the workshop example.</p>
+      <p class="bad">Nine sections on all of LP: nothing wrong, but no single idea.</p>
+      <details><summary>The prompt</summary>
+<pre>Make a web page that explains linear programming. Save it as v1.html.</pre></details>
+      <a class="pfile" href="https://github.com/HaoLI-KU/EngOpt_workshop_LP_AI_demo/blob/main/prompts/v1.md">The prompt, as a file</a>
+      <a class="open" href="claude/v1/">Open v1</a>
+    </div>
+  </article>
+
+  <article class="card">
+    <a class="shot" href="claude/v2/"><img src="images/claude_v2.jpg" alt="Screenshot of the v2 page" loading="lazy"></a>
+    <div class="body">
+      <span class="tag">v2 · + the course material · about 5 minutes</span>
+      <h3>The lecture, retold</h3>
+      <p class="good">The right problem and the right optimum, with three sliders.</p>
+      <p class="bad">Calls every profit line that meets the region &ldquo;touching&rdquo; it, even one cutting through the middle; in the lecture the line <em>touches</em> only at the edge, and the last touch is the optimum.</p>
+      <details><summary>The prompt</summary>
+<pre>Make a web page that explains linear programming, using the workshop example
+of Lecture 2. The lecture slides and the MATLAB code are in course_material/.
+Save it as v2.html.</pre></details>
+      <a class="pfile" href="https://github.com/HaoLI-KU/EngOpt_workshop_LP_AI_demo/blob/main/prompts/v2.md">The prompt, as a file</a>
+      <a class="open" href="claude/v2/">Open v2</a>
+    </div>
+  </article>
+
+  <article class="card">
+    <a class="shot" href="claude/v3/"><img src="images/claude_v3.jpg" alt="Screenshot of the v3 page" loading="lazy"></a>
+    <div class="body">
+      <span class="tag">v3 · the full specification · about 3 minutes</span>
+      <h3>One idea, built to our design</h3>
+      <p class="good">Profit line, corners, hover and "Try this", as asked; every number computed.</p>
+      <p class="bad">A star sits on the optimum as soon as the page opens, so the answer comes before the student moves the line.</p>
+      <p class="bad">On a phone, the box with the LP is cut off on the right.</p>
+      <details><summary>The prompt</summary>
+<pre>Read the files in course_material/: the Lecture 2 slides on the workshop
+problem (PDF) and the MATLAB code that solves it.
+
+Make ONE web page, index.html, that teaches a first-year engineering student
+why the optimum of a linear programme sits at a corner of the feasible region,
+using this workshop example.
+
+The page:
+1. A plot of the (x1, x2) plane: the three machine constraints as coloured,
+   labelled lines, and the feasible region shaded.
+2. A slider for the profit target k that moves the profit line
+   50 x1 + 100 x2 = k across the plot. Show whether the line still touches
+   the region, and mark the last corner it touches.
+3. A table of the corners of the region and their profit; highlight the best.
+4. Hovering over (or tapping) any point of the plot shows x1, x2, the profit,
+   and whether that plan is feasible.
+5. Three short "Try this" instructions, in plain words.
+
+Rules:
+- Use exactly the numbers in the course material. Compute the corners and the
+  optimum in the page's own JavaScript; do not type the answers in.
+- One self-contained file: HTML, CSS and JavaScript inside, no libraries,
+  no internet. It must also fit a phone screen.
+- First tell me your plan in five lines, then write the file.</pre></details>
+      <a class="pfile" href="https://github.com/HaoLI-KU/EngOpt_workshop_LP_AI_demo/blob/main/prompts/v3.md">The prompt, as a file</a>
+      <a class="open" href="claude/v3/">Open v3</a>
+    </div>
+  </article>
+
+  <article class="card">
+    <a class="shot" href="claude/v4/"><img src="images/claude_v4.jpg" alt="Screenshot of the v4 page" loading="lazy"></a>
+    <div class="body">
+      <span class="tag">v4 · v3 + its two issues fixed + machine sliders · about 8 minutes more</span>
+      <h3>The checked page</h3>
+      <p class="good">Both v3 issues fixed by saying what we saw, not how to fix it.</p>
+      <p class="good">Machine-minute sliders and shadow prices: every number equals MATLAB's.</p>
+      <p class="bad">Two line labels crowd together when grinding is cut; its own check ran without a screen (&ldquo;headless&rdquo;): it never looked at the page.</p>
+      <details><summary>The two prompts after v3</summary>
+<pre>On my phone the linear programme box is cut off on the right. And the star
+is already on the corner (187.5, 125) when the page opens, with k only at
+$9,875, so it gives the answer away before the line gets there. Fix both.</pre>
+<pre>Add three sliders under the plot: the minutes available on the lathes
+(2000 to 3000), the milling machines (1500 to 2500) and the grinding machines
+(300 to 550), starting at 2500, 2000 and 450. The region, the corner table and
+the optimum must update as they move.
+
+Show the best profit, and for each machine what one more minute is worth
+(its shadow price). At the lecture's values the page must show $1.25, $9.375
+and $0 per minute, as on the slides. Add one sentence explaining why grinding
+is worth $0.</pre></details>
+      <a class="pfile" href="https://github.com/HaoLI-KU/EngOpt_workshop_LP_AI_demo/blob/main/prompts/v4.md">The prompts, as a file</a>
+      <a class="open" href="claude/v4/">Open v4</a>
+    </div>
+  </article>
+
+</div>
+
+<h2>A free model: the warm-up</h2>
+<p class="lead">Gemini 3.5 Flash-Lite on a free Google AI Studio key, in the OpenCode agent, same folder. November 2026.</p>
+<div class="grid">
+
+  <article class="card">
+    <a class="shot" href="free/hello/"><img src="images/free_hello.jpg" alt="Screenshot of the free model's hello page" loading="lazy"></a>
+    <div class="body">
+      <span class="tag">one small file · 3 seconds</span>
+      <h3>A small task: right</h3>
+      <p class="good">Wrote this page: a title, one sentence, a button that shows today's date.</p>
+      <p class="bad">The full LP page: too slow, or no file at all. The LP pages above are Claude's.</p>
+      <details><summary>The prompt</summary>
+<pre>Create a file hello.html: a page with the title 'Engineering Optimisation', one
+sentence saying it was made in Lecture 9, and a button that shows today's date
+when clicked. One file, no libraries.</pre></details>
+      <a class="pfile" href="https://github.com/HaoLI-KU/EngOpt_workshop_LP_AI_demo/blob/main/prompts/v0_warmup.md">The prompt, as a file</a>
+      <a class="open" href="free/hello/">Open the page</a>
+    </div>
+  </article>
+
+</div>
+
+<h2>How each page was checked</h2>
+<ol>
+  <li><strong>Every number</strong> against the Lecture 2 slides: the corners, the optimum, the shadow prices.</li>
+  <li><strong>The sliders pushed to the extremes</strong>, against MATLAB's <code>linprog</code> (table below).</li>
+  <li><strong>The picture</strong>: the profit line slopes down and moves parallel; the corners sit on the lines.</li>
+  <li><strong>A narrow window</strong>: does it still fit a phone?</li>
+  <li><strong>Ask the agent</strong> how the page computes the corners: does the answer make sense?</li>
+</ol>
+<table>
+  <thead><tr><th>Minutes (lathes, milling, grinding)</th><th>Best plan</th><th class="n">Profit</th><th class="n">One more minute is worth</th></tr></thead>
+  <tbody>
+    <tr><td>2500, 2000, 450 (the lecture)</td><td style="white-space:nowrap">(187.5, 125)</td><td class="n">$21,875</td><td class="n">$1.25 · $9.375 · $0</td></tr>
+    <tr><td>2500, 2000, 350</td><td style="white-space:nowrap">(125, 150)</td><td class="n">$21,250</td><td class="n">$0 · $6.25 · $25</td></tr>
+  </tbody>
+</table>
+
+<footer>
+<p><strong>&copy; 2026 Hao Li &lt;hli@sdu.dk&gt;. All rights reserved.</strong> See <a href="https://github.com/HaoLI-KU/EngOpt_workshop_LP_AI_demo/blob/main/LICENSE">LICENSE</a>.</p>
+<p>Made for Lecture 9 of Engineering Optimisation, University of Southern Denmark, November 2026.
+The pages are exactly as the agents wrote them, imperfections included, apart from the copyright line at the bottom.
+The course material (slides, PDF, MATLAB code) is not in this repository.
+<a href="https://github.com/HaoLI-KU/EngOpt_workshop_LP_AI_demo">The repository on GitHub</a>.</p>
+</footer>
+
+</main>
+</body>
+</html>
