@@ -11,4 +11,4 @@ when clicked. One file, no libraries.
 The result: [free/hello/](../free/hello/) (3 seconds).
 
 ---
-Copyright © 2026 Hao Li <hli@sdu.dk>. All rights reserved.
+© 2026 Hao Li. Licensed under [CC BY 4.0](../LICENSE-CONTENT).
